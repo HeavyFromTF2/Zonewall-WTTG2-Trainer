@@ -4,9 +4,9 @@ import java.awt.event.*;
 import java.util.Random;
 
 /**
-    To hell with the clickmaster shitass achievement lol
+ To hell with the clickmaster shitass achievement lol
 
-    Credits: HeavyFromTF2 on GitHub \o/
+ Credits: HeavyFromTF2 on GitHub \o/
  */
 public class ZonewallWTTG2 extends JPanel implements ActionListener, MouseListener {
     static final int WIDTH = 900;
@@ -16,7 +16,7 @@ public class ZonewallWTTG2 extends JPanel implements ActionListener, MouseListen
     private final int TRACK_Y = 60;
     private final int POINT_SIZE = 14;
 
-    private final int SLOTS = 40;
+    private final int SLOTS = 30;
     private int redCount = 3;      // Number of red slots
     private int redStart = 10;     // Start index of red slots
 
@@ -66,16 +66,31 @@ public class ZonewallWTTG2 extends JPanel implements ActionListener, MouseListen
         return MARGIN_LEFT + slotWidth * slotIndex + slotWidth / 2.0;
     }
 
-    // Determine current slot index the bar is over (using barX)
+    /**
+     * Determine current slot index the bar is over.
+     *
+     * NOTE: changed to "nearest-center" method to avoid off-by-one errors
+     * that happen when using rounding at slot boundaries (especially when the
+     * bar has width > 1 and moves fast). This compares the center of the bar
+     * with the centers of all slots and picks the closest one.
+     */
     private int currentSlotIndex() {
-        double trackWidth = WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
-        double slotWidth = trackWidth / (double) SLOTS;
-        // Adjust barX for center alignment of the bar with the slot
-        double relative = barX - MARGIN_LEFT + slotWidth / 2.0;
-        int idx = (int) Math.round(relative / slotWidth);
-        if (idx < 0) idx = 0;
-        if (idx > SLOTS - 1) idx = SLOTS - 1;
-        return idx;
+        double barCenter = barX + BAR_PIXEL_WIDTH / 2.0;
+        int bestIdx = 0;
+        double bestDist = Double.MAX_VALUE;
+
+        for (int i = 0; i < SLOTS; i++) {
+            double cx = slotCenterX(i);
+            double dist = Math.abs(cx - barCenter);
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestIdx = i;
+            }
+        }
+        // clamp just in case
+        if (bestIdx < 0) bestIdx = 0;
+        if (bestIdx > SLOTS - 1) bestIdx = SLOTS - 1;
+        return bestIdx;
     }
 
     // Paint method: draw all elements including track, slots, bar, and info text
